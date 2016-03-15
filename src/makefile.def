@@ -1,0 +1,72 @@
+# Copyright (c) 2016, Jonathan Ward
+# All rights reserved.
+# 
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are met:
+# 
+# * Redistributions of source code must retain the above copyright notice, this
+#   list of conditions and the following disclaimer.
+# 
+# * Redistributions in binary form must reproduce the above copyright notice,
+#   this list of conditions and the following disclaimer in the documentation
+#   and/or other materials provided with the distribution.
+# 
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+# AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+# DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+# FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+# DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+# SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+# CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+# OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+# OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+CC_FLAGS=$(CC_FLAGS)\
+    /nologo /Zi /W4 /WX /wd4820\
+
+LN_LIBS=$(LN_LIBS)\
+    kernel32.lib\
+    user32.lib\
+    ws2_32.lib\
+
+# Additional flags based on flavor (fre or chk).
+# Any flavor other than fre defaults to chk.
+!IF "$(FLAVOR)" == "fre"
+
+CC_FLAGS=$(CC_FLAGS) /MT /O2 /DNDEBUG=1
+CRT_LIB=libcmt.lib
+
+!ELSE
+
+FLAVOR=chk
+CC_FLAGS=$(CC_FLAGS) /MTd /Od
+CRT_LIB=libcmtd.lib
+
+!ENDIF
+
+# Determine the architecture for build outputs.
+!IF "$(PLATFORM)" == "X64"
+
+ARCH=amd64
+
+!ELSE
+
+ARCH=x86
+
+!ENDIF
+
+BUILD_OUT=out\$(ARCH).$(FLAVOR)
+
+default: build
+
+# Generic build rule for C files.
+
+!IF "$(BUILD_OBJS)" != ""
+$(BUILD_OBJS): $(BUILD_DEPENDS)
+!ENDIF
+
+{.}.c{$(BUILD_OUT)}.obj:
+    -@mkdir $(BUILD_OUT) > nul 2>&1
+    $(CC) $(CC_FLAGS) /Fd$(TARGETPDB) /c $< /Fo$@
+
